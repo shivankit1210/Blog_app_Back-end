@@ -1,8 +1,10 @@
 const USERSCHEMA = require("../models/users.model");
+const {generateToken} = require("../utils/generateToken")
 
 exports.addUser = async (req, res) => {
   try {
     let { username, email, password } = req.body;
+    console.log(username, email, password)
 
     let existingUser = await USERSCHEMA.findOne({email})
 
@@ -15,11 +17,12 @@ exports.addUser = async (req, res) => {
       email,
       password,
     });
-    res.status(201).json({ success: true, message: "User Added Successfully !" }, newUser);
+
+    res.status(201).json({ success: true, message: "User Added Successfully !" ,newUser} );
 
   } catch (error) {
     console.log("Error while creating a user");
-    res.status(201).json({success:true,message:error});
+    res.status(201).json({success:false,message:error});
   }
 };
 
@@ -29,7 +32,7 @@ try {
   let users = await USERSCHEMA.find();
   if(users.length === 0) return res.status(200).json({success:true, message:"no user found"})
 
-    res.status(500).json({success:true,message:"User fetched successfully",count:users.length, users});
+    res.status(200).json({success:true,message:"User fetched successfully",count:users.length, users});
   
 } catch (error) {
   console.log("error whie fetching all the users")
@@ -58,7 +61,7 @@ exports.updateUser = async (req, res) => {
   try {
     let { id } = req.params;
 
-    let findUser = await USER_SCHEMA.findById(id);
+    let findUser = await USERSCHEMA.findById(id);
 
     if (!findUser) return res.status(200).json({ message: "no user found" });
 
@@ -108,5 +111,14 @@ exports.login = async (req, res) => {
   console.log(isMatched);
 
   if(!isMatched) return res.status(401).json({message:"Wrong password !"})
-    res.status(200).json({success:true, message:"User Logged In"})
+
+    let token = generateToken(findUser._id);
+    // console.log(token)
+
+    res.cookie("myCookie",token, {
+      maxAge: 1*60 *60*1000,    // 1 hr in ms
+      httpOnly:true,     //it can not be modified by browser.
+    })
+
+    res.status(200).json({success:true, message:"User Logged In",token:token,})
 };
