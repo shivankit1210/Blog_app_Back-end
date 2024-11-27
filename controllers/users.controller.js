@@ -1,3 +1,4 @@
+const cookieParser = require("cookie-parser");
 const USERSCHEMA = require("../models/users.model");
 const {generateToken} = require("../utils/generateToken")
 
@@ -103,10 +104,10 @@ exports.deleteUser = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  let { email, password } = req.params;
+  let { email, password } = req.body;
   let findUser = await USERSCHEMA.findOne({ email });
 
-  if (!findUser) return res.status(401).json({ message: "PLease Register" });
+  if (!findUser) return res.status(401).json({ message: "Please Register" });
   let isMatched = await findUser.verifyPassword(password);
   console.log(isMatched);
 
@@ -121,4 +122,12 @@ exports.login = async (req, res) => {
     })
 
     res.status(200).json({success:true, message:"User Logged In",token:token,})
+};
+
+
+exports.logOut = async (req,res)=>{
+res.clearCookie("mycookie", "", {
+  maxAge:Date.now
+});
+res.status(200).json({success: true, message:"User Logged out !"})
 };
